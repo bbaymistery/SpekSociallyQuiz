@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-cyan: #00f3ff;
+  --color-neon-magenta: #ff00ff;
+  --color-neon-yellow: #fffb00;
+  --color-neon-green: #00ff66;
+  --color-neon-orange: #ff6600;
+
+  --color-brand-gold: #C4A661;
+  --color-brand-gold-light: #E2CD93;
+  --color-brand-cream: #FCF8F5;
+  --color-brand-dark: #1A1A1A;
+  
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Playfair Display', 'Georgia', serif;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100 font-sans antialiased overflow-x-hidden;
+    /* Kahoot-like subtle animated background */
+    background-image: radial-gradient(circle at 15% 50%, rgba(0, 243, 255, 0.05), transparent 25%),
+                      radial-gradient(circle at 85% 30%, rgba(255, 0, 255, 0.05), transparent 25%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+}
+
+@layer utilities {
+  .text-glow-cyan {
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.5), 0 0 20px rgba(0, 243, 255, 0.3);
+  }
+  .text-glow-magenta {
+    text-shadow: 0 0 10px rgba(255, 0, 255, 0.5), 0 0 20px rgba(255, 0, 255, 0.3);
+  }
+  .text-glow-gold {
+    text-shadow: 0 0 10px rgba(196, 166, 97, 0.5), 0 0 20px rgba(196, 166, 97, 0.3);
+  }
+  .box-glow-cyan {
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4), inset 0 0 10px rgba(0, 243, 255, 0.2);
+  }
+  .box-glow-magenta {
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.4), inset 0 0 10px rgba(255, 0, 255, 0.2);
+  }
+  .box-glow-gold {
+    box-shadow: 0 0 15px rgba(196, 166, 97, 0.3), inset 0 0 10px rgba(196, 166, 97, 0.1);
+  }
+  .box-glow-dark {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1), inset 0 0 10px rgba(0, 0, 0, 0.05);
+  }
+}
