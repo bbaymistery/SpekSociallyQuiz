@@ -3,10 +3,19 @@ import { useGameStore } from '../store/gameStore';
 
 let peer = null;
 let hostConnection = null;
+const peerConfig = {
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' }
+    ]
+  }
+};
 
 export const joinRoom = (roomCode, nickname) => {
   return new Promise((resolve, reject) => {
-    peer = new Peer();
+    peer = new Peer(peerConfig);
 
     peer.on('open', (id) => {
       useGameStore.getState().setRole(false);

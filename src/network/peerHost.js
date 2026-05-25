@@ -9,10 +9,20 @@ const generateShortCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+const peerConfig = {
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' }
+    ]
+  }
+};
+
 export const initHost = () => {
   const roomCode = generateShortCode();
   
-  peer = new Peer(roomCode);
+  peer = new Peer(roomCode, peerConfig);
 
   peer.on('open', (id) => {
     useGameStore.getState().setRole(true);
