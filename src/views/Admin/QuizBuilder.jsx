@@ -241,8 +241,9 @@ export default function QuizBuilder({ quizId, onBack }) {
       </div>
 
       <div className="mt-8 text-center">
-        <Button variant="ghost" className="border-dashed border-2 py-6 w-full text-slate-400 hover:text-white" onClick={handleAddEmptyQuestion}>
-          <Plus className="w-6 h-6 mx-auto mb-2" /> Add Question
+        <Button variant="ghost" className="border-dashed border-2 border-slate-600 bg-transparent hover:bg-slate-800 hover:border-[#C4A661] hover:text-[#C4A661] text-slate-400 py-8 w-full transition-all flex flex-col items-center justify-center" onClick={handleAddEmptyQuestion}>
+          <Plus className="w-8 h-8 mb-2" /> 
+          <span className="font-bold text-lg">Add Question</span>
         </Button>
       </div>
     </div>

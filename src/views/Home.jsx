@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
 import { joinRoom } from '../network/peerClient';
@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { Card, CardContent } from '../components/Card';
 import { Input, Label } from '../components/Input';
 import { Zap, MonitorPlay } from 'lucide-react';
+import logoImg from '../assets/logo.jpg';
 
 export default function Home() {
   const [roomCode, setRoomInput] = useState('');
@@ -17,6 +18,14 @@ export default function Home() {
   const [showAdminPrompt, setShowAdminPrompt] = useState(false);
   const [adminCode, setAdminCode] = useState('');
   const [adminError, setAdminError] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roomParam = params.get('room');
+    if (roomParam) {
+      setRoomInput(roomParam.toUpperCase());
+    }
+  }, []);
 
   const handleJoin = async (e) => {
     e.preventDefault();
@@ -53,13 +62,28 @@ export default function Home() {
         transition={{ duration: 0.8, type: 'spring' }}
         className="text-center mb-12 z-10 flex flex-col items-center"
       >
-        {/* Placeholder for the logo - you can put the actual logo image here */}
-        <div className="text-5xl md:text-7xl font-display font-bold mb-2 tracking-widest text-[#1A1A1A]">
-          <span className="text-[#C4A661]">S</span>PEAK
+        {/* Actual Logo Image */}
+        <img 
+          src={logoImg} 
+          alt="Speak Socially Logo" 
+          className="h-48 md:h-70 object-contain mb-6 mx-auto drop-shadow-sm rounded-xl mix-blend-multiply"
+          onError={(e) => {
+            // Fallback to text if the image isn't found
+            e.target.style.display = 'none';
+            document.getElementById('fallback-logo').style.display = 'block';
+          }}
+        />
+        
+        {/* Fallback Text Logo (hidden by default unless image fails to load) */}
+        <div id="fallback-logo" className="hidden">
+          <div className="text-5xl md:text-7xl font-display font-bold mb-2 tracking-widest text-[#1A1A1A]">
+            <span className="text-[#C4A661]">S</span>PEAK
+          </div>
+          <div className="text-5xl md:text-7xl font-display font-bold mb-6 tracking-widest text-[#1A1A1A]">
+            SOCIALLY
+          </div>
         </div>
-        <div className="text-5xl md:text-7xl font-display font-bold mb-6 tracking-widest text-[#1A1A1A]">
-          SOCIALLY
-        </div>
+
         <p className="text-lg md:text-xl text-slate-600 font-medium tracking-wide">
           Baku Meetup & Social Club | Game Nights | Movie & Speak Club
         </p>
@@ -90,7 +114,7 @@ export default function Home() {
               <div>
                 <Label className="text-slate-700">Room Code</Label>
                 <Input
-                  placeholder="e.g. KHT-A1B2"
+                  placeholder="e.g. 123456"
                   value={roomCode}
                   onChange={e => setRoomInput(e.target.value.toUpperCase())}
                   required

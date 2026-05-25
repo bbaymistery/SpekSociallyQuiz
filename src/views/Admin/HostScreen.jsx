@@ -5,6 +5,7 @@ import { broadcastGameState, closeHost } from '../../network/peerHost';
 import { Button } from '../../components/Button';
 import { Card, CardContent } from '../../components/Card';
 import { Users, Timer, Trophy, ArrowRight, Play } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function HostScreen() {
   const store = useGameStore();
@@ -131,14 +132,36 @@ export default function HostScreen() {
         <div className="absolute top-4 right-4 z-50">
           <Button variant="danger" onClick={handleExit}>End Game & Kick All</Button>
         </div>
-        <h2 className="text-3xl text-slate-400 mb-2">Join at</h2>
-        <h1 className="text-6xl md:text-8xl font-black text-glow-cyan bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-cyan-200 mb-8 tracking-wider">
-          {roomCode}
-        </h1>
+        <h2 className="text-5xl md:text-6xl font-display font-bold text-white mb-6 drop-shadow-lg">
+          {currentQuiz?.title || 'Speak Socially Quiz'}
+        </h2>
+        
+        <div className="bg-[#2A2A2A]/80 border border-[#C4A661]/30 p-8 md:p-10 rounded-3xl shadow-2xl mb-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-5xl w-full backdrop-blur-sm">
+          
+          <div className="flex flex-col items-center text-center max-w-sm">
+            <p className="text-xl text-slate-300 mb-6 font-medium leading-relaxed">
+              Join the game by entering your <span className="text-[#C4A661] font-bold">Nickname</span> and the <span className="text-cyan-400 font-bold">Room Code</span> below:
+            </p>
+            <h1 className="text-6xl md:text-7xl font-black text-glow-cyan text-cyan-400 tracking-widest my-2 drop-shadow-xl">
+              {roomCode}
+            </h1>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden md:block w-px h-40 bg-slate-700/50"></div>
+
+          <div className="flex flex-col items-center">
+            <p className="text-sm text-slate-400 font-bold mb-4 uppercase tracking-wider">Or scan to join directly</p>
+            <div className="bg-white p-4 rounded-3xl shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+               <QRCodeSVG value={`${window.location.origin}?room=${roomCode}`} size={160} />
+            </div>
+          </div>
+
+        </div>
         
         <div className="mb-12">
-          <Button variant="neonMagenta" className="text-2xl px-12 py-6" onClick={handleStartGame} disabled={players.length === 0}>
-            Start Game <Play className="inline ml-2" />
+          <Button variant="gold" className="text-2xl px-12 py-6 rounded-2xl shadow-[0_0_20px_rgba(196,166,97,0.4)]" onClick={handleStartGame} disabled={players.length === 0}>
+            Start Game <Play className="inline ml-2 w-8 h-8" />
           </Button>
         </div>
 
@@ -184,7 +207,7 @@ export default function HostScreen() {
         </div>
         <div className="flex gap-2">
           {gameState === 'QUESTION' && (
-            <Button variant="ghost" onClick={handleSkipQuestion}>Skip</Button>
+            <Button variant="ghost" className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white" onClick={handleSkipQuestion}>Skip</Button>
           )}
           {(gameState === 'SHOW_ANSWER' || gameState === 'LEADERBOARD') && (
             <Button variant="neonCyan" onClick={handleNext} className="flex items-center gap-2">
@@ -202,27 +225,80 @@ export default function HostScreen() {
             <h1 className="text-5xl font-bold mb-12 flex items-center gap-4 text-glow-yellow">
               <Trophy className="w-12 h-12 text-yellow-400" /> {gameState === 'GAMEOVER' ? 'Final Results!' : 'Leaderboard'}
             </h1>
-            <div className="w-full max-w-3xl space-y-4">
-              <AnimatePresence>
-                {players.slice(0, 5).map((p, idx) => (
-                  <motion.div
-                    key={p.id}
-                    layout
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1, type: 'spring' }}
-                    className={`flex items-center justify-between p-6 bg-slate-800/80 rounded-2xl border border-slate-700 shadow-lg font-bold ${gameState === 'GAMEOVER' && idx === 0 ? 'text-4xl text-yellow-400 box-glow-magenta' : 'text-2xl'}`}
+            {gameState === 'GAMEOVER' ? (
+              <div className="flex items-end justify-center gap-2 md:gap-6 h-[400px] w-full max-w-4xl mt-12 pb-8">
+                {/* 2nd Place */}
+                {players[1] ? (
+                  <motion.div 
+                    initial={{ y: 200, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.5, type: 'spring', bounce: 0.4 }}
+                    className="flex flex-col items-center w-1/3"
                   >
-                    <div className="flex items-center gap-6">
-                      <span className="text-3xl w-10 text-center text-slate-500">#{idx + 1}</span>
-                      <div className="w-6 h-6 rounded-full" style={{ backgroundColor: p.color }}></div>
-                      <span>{p.nickname}</span>
+                    <div className="w-full bg-gradient-to-t from-slate-500 to-slate-300 rounded-t-2xl h-56 flex flex-col items-center pt-6 shadow-[0_0_30px_rgba(203,213,225,0.2)]">
+                      <div className="text-5xl font-black text-slate-600 mb-3">2</div>
+                      <div className="text-2xl font-bold truncate max-w-full px-2 text-white drop-shadow-md">{players[1].nickname}</div>
+                      <div className="text-slate-100 font-bold mt-1">{players[1].score} pts</div>
                     </div>
-                    <span className="text-cyan-400">{p.score} pts</span>
                   </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
+                ) : <div className="w-1/3"></div>}
+
+                {/* 1st Place */}
+                {players[0] && (
+                  <motion.div 
+                    initial={{ y: 300, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 1.5, type: 'spring', bounce: 0.5 }}
+                    className="flex flex-col items-center w-1/3 z-10"
+                  >
+                    <Trophy className="w-16 h-16 text-yellow-400 mb-4 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]" />
+                    <div className="w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-2xl h-72 flex flex-col items-center pt-6 shadow-[0_0_50px_rgba(250,204,21,0.4)]">
+                      <div className="text-7xl font-black text-yellow-700 mb-4">1</div>
+                      <div className="text-3xl font-black truncate max-w-full px-4 text-white drop-shadow-md">{players[0].nickname}</div>
+                      <div className="text-yellow-100 font-bold text-xl mt-2">{players[0].score} pts</div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* 3rd Place */}
+                {players[2] ? (
+                  <motion.div 
+                    initial={{ y: 150, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 1, type: 'spring', bounce: 0.3 }}
+                    className="flex flex-col items-center w-1/3"
+                  >
+                    <div className="w-full bg-gradient-to-t from-amber-800 to-amber-600 rounded-t-2xl h-40 flex flex-col items-center pt-4 shadow-[0_0_20px_rgba(217,119,6,0.2)]">
+                      <div className="text-4xl font-black text-amber-900 mb-2">3</div>
+                      <div className="text-xl font-bold truncate max-w-full px-2 text-white drop-shadow-md">{players[2].nickname}</div>
+                      <div className="text-amber-100 font-bold mt-1">{players[2].score} pts</div>
+                    </div>
+                  </motion.div>
+                ) : <div className="w-1/3"></div>}
+              </div>
+            ) : (
+              <div className="w-full max-w-3xl space-y-4">
+                <AnimatePresence>
+                  {players.slice(0, 5).map((p, idx) => (
+                    <motion.div
+                      key={p.id}
+                      layout
+                      initial={{ opacity: 0, x: -50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1, type: 'spring' }}
+                      className="flex items-center justify-between p-6 bg-[#2A2A2A]/80 rounded-2xl border border-[#C4A661]/30 shadow-lg font-bold text-2xl"
+                    >
+                      <div className="flex items-center gap-6">
+                        <span className="text-3xl w-10 text-center text-[#C4A661]/60">#{idx + 1}</span>
+                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: p.color }}></div>
+                        <span className="text-white">{p.nickname}</span>
+                      </div>
+                      <span className="text-cyan-400">{p.score} pts</span>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center relative">

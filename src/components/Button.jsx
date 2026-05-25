@@ -10,7 +10,7 @@ export const Button = ({ children, variant = 'primary', className, ...props }) =
     neonMagenta: "bg-fuchsia-600 hover:bg-fuchsia-500 text-white box-glow-magenta text-glow-magenta",
     gold: "bg-[#C4A661] hover:bg-[#D4B671] text-[#1A1A1A] box-glow-gold",
     darkGold: "bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#C4A661] border border-[#C4A661]/50 box-glow-dark",
-    ghost: "bg-transparent border border-slate-300 text-inherit hover:bg-slate-800",
+    ghost: "bg-transparent border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900",
     danger: "bg-rose-600 hover:bg-rose-500 text-white shadow-[0_0_15px_rgba(225,29,72,0.5)]"
   };
 

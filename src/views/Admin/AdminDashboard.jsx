@@ -40,11 +40,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-10">
-        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-fuchsia-500">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-10">
+        <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#C4A661] to-yellow-300 text-center sm:text-left">
           Host Dashboard
         </h1>
-        <Button variant="neonMagenta" onClick={handleCreate} className="flex items-center gap-2">
+        <Button variant="gold" onClick={handleCreate} className="flex items-center gap-2 w-full sm:w-auto justify-center">
           <Plus className="w-5 h-5" /> Create Quiz
         </Button>
       </div>

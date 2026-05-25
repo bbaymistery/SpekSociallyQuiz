@@ -5,13 +5,12 @@ let peer = null;
 let connections = {}; // clientId -> dataConnection
 
 const generateShortCode = () => {
-  return Math.random().toString(36).substring(2, 6).toUpperCase();
+  // Returns a 6-digit number between 100000 and 999999
+  return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 export const initHost = () => {
-  // Try to use a custom short ID for the room code, but PeerJS free server sometimes
-  // gets unhappy with conflicts. A simple prefix + random helps.
-  const roomCode = 'KHT-' + generateShortCode();
+  const roomCode = generateShortCode();
   
   peer = new Peer(roomCode);
 
