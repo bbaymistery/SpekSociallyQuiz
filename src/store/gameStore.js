@@ -22,6 +22,9 @@ export const useGameStore = create((set, get) => ({
   timeRemaining: 0,
   currentQuestion: null, // For client view
   hasAnswered: false,    // For client view
+  localAnswer: null,     // To track what the client chose
+  selectedMusic: '/kahoot_vibe.mp3', // default music
+  questionStartTime: null, // Track exact millisecond when question starts
   
   // Actions
   setRole: (isHost) => set({ isHost }),
@@ -29,12 +32,16 @@ export const useGameStore = create((set, get) => ({
   setRoomCode: (roomCode) => set({ roomCode }),
   setNickname: (nickname) => set({ nickname }),
   setGameState: (gameState) => set({ gameState }),
+  setLocalAnswer: (idx) => set({ localAnswer: idx }),
+  setSelectedMusic: (url) => set({ selectedMusic: url }),
+  setQuestionStartTime: (time) => set({ questionStartTime: time }),
   
   setQuiz: (quiz) => set({ currentQuiz: quiz, currentQuestionIndex: 0 }),
   nextQuestion: () => set((state) => ({ 
     currentQuestionIndex: state.currentQuestionIndex + 1,
     gameState: 'QUESTION',
-    answers: {} // reset answers for next question
+    answers: {}, // reset answers for next question
+    localAnswer: null // reset local answer
   })),
   
   addPlayer: (player) => set((state) => {
@@ -57,10 +64,18 @@ export const useGameStore = create((set, get) => ({
   applyScores: () => set((state) => {
     const updatedPlayers = state.players.map(p => {
       const pAnswer = state.answers[p.id];
-      if (pAnswer) {
-        return { ...p, score: p.score + pAnswer.pointsEarned };
+      if (pAnswer && pAnswer.pointsEarned > 0) {
+        return { 
+          ...p, 
+          score: p.score + pAnswer.pointsEarned,
+          streak: (p.streak || 0) + 1 
+        };
+      } else {
+        return { 
+          ...p, 
+          streak: 0 
+        };
       }
-      return p;
     });
     // Sort descending
     updatedPlayers.sort((a, b) => b.score - a.score);
@@ -81,7 +96,8 @@ export const useGameStore = create((set, get) => ({
     answers: {},
     timeRemaining: 0,
     currentQuestion: null,
-    hasAnswered: false
+    hasAnswered: false,
+    localAnswer: null
   })
 }));
 

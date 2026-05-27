@@ -34,6 +34,7 @@ export default function HostScreen() {
 
   const startTimer = (duration) => {
     store.setTimeRemaining(duration);
+    store.setQuestionStartTime(Date.now());
     if (timerRef.current) clearInterval(timerRef.current);
     
     timerRef.current = setInterval(() => {
@@ -93,6 +94,11 @@ export default function HostScreen() {
   // Trigger fireworks on GAMEOVER
   useEffect(() => {
     if (gameState === 'GAMEOVER') {
+      // Play fireworks/applause sound
+      const winAudio = new Audio('https://actions.google.com/sounds/v1/crowds/battle_crowd_celebration_1.ogg'); // Applause/Cheers
+      winAudio.volume = 0.6;
+      winAudio.play().catch(e => console.log('Audio play failed:', e));
+
       const duration = 15 * 1000;
       const animationEnd = Date.now() + duration;
       const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
@@ -159,6 +165,30 @@ export default function HostScreen() {
 
         </div>
         
+        <div className="mb-8 bg-slate-800/80 p-6 rounded-3xl border border-slate-700 w-full max-w-2xl flex flex-col items-center">
+          <p className="text-slate-400 mb-4 font-bold uppercase tracking-widest text-sm">Select Background Music</p>
+          <div className="flex gap-4">
+            {[
+              { name: 'Kahoot Vibe', url: '/kahoot_vibe.mp3' },
+              { name: 'Fun Duck', url: '/fun_vibe.mp3' },
+              { name: 'Spinning Monkeys', url: '/monkey_vibe.mp3' },
+              { name: 'Sneaky Snitch', url: '/sneaky_vibe.mp3' }
+            ].map((track) => (
+              <button
+                key={track.name}
+                onClick={() => store.setSelectedMusic(track.url)}
+                className={`px-6 py-3 rounded-xl font-bold transition-all ${
+                  store.selectedMusic === track.url 
+                    ? 'bg-[#C4A661] text-slate-900 shadow-[0_0_15px_rgba(196,166,97,0.5)]' 
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                {track.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="mb-12">
           <Button variant="gold" className="text-2xl px-12 py-6 rounded-2xl shadow-[0_0_20px_rgba(196,166,97,0.4)]" onClick={handleStartGame} disabled={players.length === 0}>
             Start Game <Play className="inline ml-2 w-8 h-8" />
@@ -194,7 +224,12 @@ export default function HostScreen() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col p-6">
+    <div className="min-h-screen flex flex-col p-6 relative">
+      {/* Background Audio Player */}
+      {gameState !== 'LOBBY' && gameState !== 'GAMEOVER' && (
+        <audio src={store.selectedMusic} autoPlay loop onPlay={(e) => e.target.volume = 0.2} className="hidden" />
+      )}
+
       {/* Top Bar */}
       <div className="flex justify-between items-center mb-8 bg-slate-800/80 p-4 rounded-2xl shadow-xl border border-slate-700/50">
         <div className="text-xl font-bold truncate flex-1">
@@ -291,7 +326,17 @@ export default function HostScreen() {
                       <div className="flex items-center gap-6">
                         <span className="text-3xl w-10 text-center text-[#C4A661]/60">#{idx + 1}</span>
                         <div className="w-6 h-6 rounded-full" style={{ backgroundColor: p.color }}></div>
-                        <span className="text-white">{p.nickname}</span>
+                        <span className="text-white flex items-center gap-3">
+                          {p.nickname}
+                          {p.streak >= 3 && (
+                            <span className="flex items-center gap-1 bg-rose-500/20 px-2 py-0.5 rounded-lg border border-rose-500/50 text-base" title={`${p.streak} in a row!`}>
+                              🔥 <span className="text-rose-400 text-sm">x{p.streak}</span>
+                            </span>
+                          )}
+                          {p.streak > 0 && p.streak < 3 && (
+                            <span className="text-2xl" title="Correct!">😊</span>
+                          )}
+                        </span>
                       </div>
                       <span className="text-cyan-400">{p.score} pts</span>
                     </motion.div>

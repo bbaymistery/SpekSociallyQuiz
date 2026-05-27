@@ -36,31 +36,49 @@ const peerConfig = {
 export const initHost = () => {
   const roomCode = generateShortCode();
   
-  peer = new Peer(roomCode, peerConfig);
+  // Update state immediately so UI transitions to HostScreen
+  useGameStore.getState().setRole(true);
+  useGameStore.getState().setRoomCode(roomCode);
+  
+  setTimeout(() => {
+    try {
+      peer = new Peer(roomCode, peerConfig);
 
-  peer.on('open', (id) => {
-    useGameStore.getState().setRole(true);
-    useGameStore.getState().setMyId(id);
-    useGameStore.getState().setRoomCode(id);
-  });
+      peer.on('open', (id) => {
+        useGameStore.getState().setMyId(id);
+        useGameStore.getState().setRoomCode(id);
+      });
 
-  peer.on('connection', (conn) => {
-    connections[conn.peer] = conn;
+      peer.on('connection', (conn) => {
+        connections[conn.peer] = conn;
 
-    conn.on('data', (data) => {
-      handleClientMessage(conn.peer, data);
-    });
+        // Keep-alive heartbeat to prevent NAT/TURN timeouts
+        const pingInterval = setInterval(() => {
+          if (conn && conn.open) {
+            try { conn.send({ type: 'PING' }); } catch(e){}
+          }
+        }, 3000);
 
-    conn.on('close', () => {
-      delete connections[conn.peer];
-      useGameStore.getState().removePlayer(conn.peer);
-      broadcastGameState();
-    });
-  });
+        conn.on('data', (data) => {
+          handleClientMessage(conn.peer, data);
+        });
 
-  peer.on('error', (err) => {
-    console.error('PeerJS Host Error:', err);
-  });
+        conn.on('close', () => {
+          clearInterval(pingInterval);
+          delete connections[conn.peer];
+          useGameStore.getState().removePlayer(conn.peer);
+          broadcastGameState();
+        });
+      });
+
+      peer.on('error', (err) => {
+        console.error('PeerJS Host Error:', err);
+      });
+    } catch (err) {
+      console.error('Failed to initialize PeerJS:', err);
+      alert('Failed to connect to multiplayer server. Please check your internet or adblocker.');
+    }
+  }, 10);
 };
 
 const handleClientMessage = (clientId, data) => {
@@ -81,10 +99,13 @@ const handleClientMessage = (clientId, data) => {
     const q = store.currentQuiz.questions[store.currentQuestionIndex];
     const isCorrect = q.correctAnswer === data.answerIdx;
     
-    // Calculate score using our utility, but here we just rely on the host's time
-    // For a real app, client time vs host time might desync, but local network is fast.
+    // Calculate exact time taken in milliseconds for precise scoring
+    const timeTakenMs = Date.now() - store.questionStartTime;
+    const totalTimeMs = (q.timer || 20) * 1000;
+    const timeRemainingMs = Math.max(0, totalTimeMs - timeTakenMs);
+    
     import('../utils/scoring').then(({ calculateScore }) => {
-      const pts = calculateScore(q.difficulty, store.timeRemaining, q.timer || 20, isCorrect);
+      const pts = calculateScore(q.difficulty, timeRemainingMs, totalTimeMs, isCorrect);
       store.recordAnswer(clientId, data.answerIdx, store.timeRemaining, pts);
       
       // Let client know their answer was received
@@ -129,12 +150,20 @@ const getSyncableState = () => {
 };
 
 export const broadcastGameState = () => {
-  const stateUpdate = getSyncableState();
-  Object.values(connections).forEach(conn => {
-    if (conn.open) {
-      conn.send({ type: 'STATE_UPDATE', state: stateUpdate });
-    }
-  });
+  try {
+    const stateUpdate = getSyncableState();
+    Object.values(connections).forEach(conn => {
+      if (conn.open) {
+        conn.send({ type: 'STATE_UPDATE', state: stateUpdate });
+      } else {
+        console.warn('Connection not open for peer:', conn.peer);
+        // Try sending anyway, sometimes PeerJS state is laggy
+        try { conn.send({ type: 'STATE_UPDATE', state: stateUpdate }); } catch(e){}
+      }
+    });
+  } catch (err) {
+    console.error('Error in broadcastGameState:', err);
+  }
 };
 
 export const sendToClient = (clientId, msg) => {

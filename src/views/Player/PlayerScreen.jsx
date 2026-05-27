@@ -4,24 +4,22 @@ import { sendAnswer, leaveRoom } from '../../network/peerClient';
 import { Button } from '../../components/Button';
 import { LogOut, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function PlayerScreen() {
   const store = useGameStore();
+  const [previousScore, setPreviousScore] = useState(0);
+  
   const { 
-    gameState, nickname, myId, players, 
+    gameState, nickname, myId, players,  
     currentQuestion, hasAnswered, timeRemaining 
   } = store;
 
   // Find my own score/status from players array
+  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
   const myPlayerInfo = players.find(p => p.id === myId);
   const myScore = myPlayerInfo?.score || 0;
-
-  // Check if I got the last question right by looking at my score jump or we can infer from host state.
-  // Actually, the host doesn't tell the client if they got it right immediately to prevent cheating.
-  // When in SHOW_ANSWER, the currentQuestion has the options and difficulty but not the correctAnswer index directly in state.
-  // Wait, I need to make sure the host sends the correctAnswer when state is SHOW_ANSWER!
-  // I'll update peerHost getSyncableState to include correctAnswer ONLY if gameState === 'SHOW_ANSWER'.
+  const myRank = sortedPlayers.findIndex(p => p.id === myId) + 1;
 
   // Let's implement the UI first.
   const handleAnswer = (idx) => {
@@ -35,17 +33,11 @@ export default function PlayerScreen() {
     store.resetGame();
   };
 
-  // Trigger confetti on correct answer
   useEffect(() => {
-    if (gameState === 'SHOW_ANSWER' && currentQuestion?.correctAnswer !== undefined) {
-      // Find what the user answered... we didn't store the local answer choice.
-      // But we can check if they earned points this round? Host only sends updated players array.
-      // A simpler way: just show "Look up at the screen!" if we don't have local knowledge.
-      // Let's assume the user just looks at the host screen for results for now to keep it simple, Kahoot style.
-      // Kahoot actually shows "Correct" or "Incorrect" on the device.
-      // To do this, I need to store the local answer choice. 
+    if (gameState === 'QUESTION') {
+      setPreviousScore(myScore);
     }
-  }, [gameState]);
+  }, [gameState, myScore]);
 
   if (gameState === 'LOBBY') {
     return (
@@ -77,11 +69,14 @@ export default function PlayerScreen() {
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-3xl font-bold mb-4 text-[#C4A661]"
+            className="text-4xl font-bold mb-4 text-[#C4A661] drop-shadow-lg"
           >
-            Waiting for others...
+            Answer submitted!
           </motion.div>
-          <div className="w-16 h-16 border-4 border-[#C4A661] border-t-transparent rounded-full animate-spin mt-8"></div>
+          <div className="text-xl mt-2 mb-8 opacity-80 text-slate-300 font-medium">
+            Waiting for others to answer...
+          </div>
+          <div className="w-16 h-16 border-4 border-[#C4A661] border-t-transparent rounded-full animate-spin"></div>
         </div>
       );
     }
@@ -148,7 +143,71 @@ export default function PlayerScreen() {
   }
 
   if (gameState === 'SHOW_ANSWER' || gameState === 'LEADERBOARD' || gameState === 'GAMEOVER') {
-    // Ideally we'd show correct/incorrect. For now:
+    if ((gameState === 'SHOW_ANSWER' || gameState === 'LEADERBOARD') && currentQuestion?.correctAnswer !== undefined) {
+      const isTimeout = store.localAnswer === null;
+      const isCorrect = !isTimeout && store.localAnswer === currentQuestion.correctAnswer;
+      
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-900 text-center relative overflow-hidden">
+          {/* Subtle background glow based on correctness */}
+          <div className={`absolute inset-0 opacity-20 pointer-events-none transition-colors duration-1000 ${isCorrect ? 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-green-600 via-transparent to-transparent' : 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-rose-600 via-transparent to-transparent'}`} />
+          
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", damping: 15, stiffness: 100 }}
+            className="z-10 flex flex-col items-center w-full max-w-md"
+          >
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg ${isCorrect ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-rose-500/20 text-rose-400 border border-rose-500/50'}`}>
+              {isCorrect ? <CheckCircle2 className="w-12 h-12" /> : <XCircle className="w-12 h-12" />}
+            </div>
+            
+            <h1 className={`text-4xl font-bold mb-8 ${isCorrect ? 'text-green-400' : 'text-rose-400'}`}>
+              {isTimeout ? "Time's Up!" : isCorrect ? "Correct!" : "Incorrect"}
+            </h1>
+            
+            {isCorrect && (
+              <div className="bg-slate-800/80 border border-slate-700 w-full rounded-2xl p-6 shadow-xl mb-6">
+                <p className="text-4xl font-black text-[#C4A661] mb-2">+{myPlayerInfo?.score - previousScore}</p>
+                <p className="text-slate-400 font-medium text-sm uppercase tracking-widest">Points Earned</p>
+                
+                <div className="w-full h-px bg-slate-700/50 my-4"></div>
+                
+                <p className="text-slate-400 font-medium text-sm uppercase tracking-widest mb-1">Total Points</p>
+                <p className="text-2xl font-bold text-cyan-400">{myScore}</p>
+              </div>
+            )}
+
+            {!isCorrect && (
+              <div className="bg-slate-800/80 border border-slate-700 w-full rounded-2xl p-6 shadow-xl mb-6 flex flex-col items-center">
+                <div className="opacity-60 text-xs uppercase tracking-widest mb-3 text-slate-300 font-bold">Correct answer was</div>
+                <div className="text-xl font-bold text-white text-center w-full">
+                  {currentQuestion.options[currentQuestion.correctAnswer]}
+                </div>
+                
+                <div className="w-full h-px bg-slate-700/50 my-4"></div>
+                
+                <p className="text-4xl font-black text-rose-500 mb-2">+0</p>
+                <p className="text-slate-400 font-medium text-sm uppercase tracking-widest mb-4">Points Earned</p>
+                
+                <div className="w-full h-px bg-slate-700/50 my-4"></div>
+                
+                <p className="text-slate-400 font-medium text-sm uppercase tracking-widest mb-1">Total Points</p>
+                <p className="text-2xl font-bold text-cyan-400">{myScore}</p>
+              </div>
+            )}
+
+            <div className="mt-4 bg-[#1A1A1A] border border-[#C4A661]/30 w-full rounded-2xl p-4 shadow-inner flex flex-col items-center">
+              <span className="text-slate-400 text-sm font-medium mb-1">Your Rank</span>
+              <span className="text-2xl font-bold text-[#C4A661]">
+                {myRank}{myRank === 1 ? 'st' : myRank === 2 ? 'nd' : myRank === 3 ? 'rd' : 'th'} Place
+              </span>
+            </div>
+          </motion.div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-900 text-center">
         <motion.div 
@@ -156,7 +215,7 @@ export default function PlayerScreen() {
           animate={{ y: 0, opacity: 1 }}
           className="text-4xl font-bold mb-4"
         >
-          {gameState === 'LEADERBOARD' ? 'Leaderboard' : gameState === 'GAMEOVER' ? 'Game Over!' : 'Time is up!'}
+          {gameState === 'LEADERBOARD' ? 'Leaderboard' : 'Game Over!'}
         </motion.div>
         <p className="text-2xl text-slate-400">Look at the main screen</p>
         <div className="mt-12 text-3xl font-bold text-cyan-400">
