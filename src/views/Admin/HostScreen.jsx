@@ -74,14 +74,18 @@ export default function HostScreen() {
 
   const handleNext = () => {
     if (gameState === 'SHOW_ANSWER') {
-      store.setGameState('LEADERBOARD');
+      if (currentQuestionIndex + 1 < currentQuiz.questions.length) {
+        store.setGameState('LEADERBOARD');
+      } else {
+        // Skip leaderboard on last question, go straight to podium (GAMEOVER)
+        store.setGameState('GAMEOVER');
+      }
     } else if (gameState === 'LEADERBOARD') {
       if (currentQuestionIndex + 1 < currentQuiz.questions.length) {
         store.nextQuestion();
         startTimer(currentQuiz.questions[currentQuestionIndex + 1].timeLimit);
       } else {
-        // Game over logic
-        store.setGameState('GAMEOVER');
+        store.setGameState('GAMEOVER'); // fallback
       }
     }
   };
