@@ -2,7 +2,7 @@ import { io } from 'socket.io-client';
 import { useGameStore } from '../store/gameStore';
 
 const SOCKET_SERVER_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-render-backend-url.onrender.com' // We will update this later after deployment
+  ? 'https://speksociallyquiz.onrender.com' // Deployed Render backend
   : 'http://localhost:3001';
 
 let socket = null;
