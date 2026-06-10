@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuizStore, useGameStore } from '../../store/gameStore';
-import { initHost } from '../../network/peerHost';
+import { initHost } from '../../network/socketManager';
 import { Button } from '../../components/Button';
 import { Card, CardContent } from '../../components/Card';
 import { Play, Plus, Trash2, Edit } from 'lucide-react';

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useGameStore } from '../../store/gameStore';
-import { sendAnswer, leaveRoom } from '../../network/peerClient';
+import { sendAnswer, leaveRoom } from '../../network/socketManager';
 import { Button } from '../../components/Button';
 import { LogOut, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';

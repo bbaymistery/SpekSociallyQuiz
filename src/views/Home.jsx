@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
-import { joinRoom } from '../network/peerClient';
-import { initHost } from '../network/peerHost';
+import { joinRoom } from '../network/socketManager';
 import { Button } from '../components/Button';
 import { Card, CardContent } from '../components/Card';
 import { Input, Label } from '../components/Input';
